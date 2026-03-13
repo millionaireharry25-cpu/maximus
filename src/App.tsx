@@ -283,10 +283,16 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [showMusicToast, setShowMusicToast] = useState(false);
+  const [isAppLoading, setIsAppLoading] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsAppLoading(false), 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load data on login
   useEffect(() => {
@@ -502,7 +508,7 @@ export default function App() {
 
   if (!userEmail) {
     return (
-      <div className="flex flex-col h-screen items-center justify-center relative font-sans p-4 overflow-hidden">
+      <div className="flex flex-col h-screen items-center justify-center relative font-sans p-4 overflow-hidden bg-black">
         <div className="absolute inset-0 z-0">
           <iframe 
             src="https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1" 
@@ -512,36 +518,51 @@ export default function App() {
           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
-        <div className="relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 w-full max-w-md text-white shadow-2xl">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-white/20 rounded-full backdrop-blur-md border border-white/10">
-              <CheckSquare size={32} />
+        
+        {isAppLoading ? (
+          <div className="relative z-10 flex flex-col items-center justify-center animate-in fade-in duration-1000">
+            <div className="relative flex items-center justify-center w-32 h-32 mb-8">
+              <div className="absolute inset-0 border-t-2 border-white/20 border-r-2 rounded-full animate-spin" style={{ animationDuration: '3s' }}></div>
+              <div className="absolute inset-2 border-b-2 border-white/40 border-l-2 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+              <div className="absolute inset-4 border-t-2 border-white/60 border-l-2 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+              <div className="p-4 bg-white/10 rounded-full backdrop-blur-md border border-white/10 animate-pulse">
+                <CheckSquare size={32} className="text-white" />
+              </div>
             </div>
+            <h2 className="text-white/80 font-light tracking-[0.3em] uppercase text-sm animate-pulse">Loading Workspace</h2>
           </div>
-          <h1 className="text-3xl font-light mb-2 text-center">Welcome Back</h1>
-          <p className="text-white/60 text-center mb-8 text-sm">Sign in to sync your tasks and notes</p>
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Email Address</label>
-              <input 
-                type="email" 
-                name="email" 
-                required
-                placeholder="you@example.com"
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors"
-              />
+        ) : (
+          <div className="relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 w-full max-w-md text-white shadow-2xl animate-in fade-in zoom-in-95 duration-700">
+            <div className="flex justify-center mb-6">
+              <div className="p-4 bg-white/20 rounded-full backdrop-blur-md border border-white/10">
+                <CheckSquare size={32} />
+              </div>
             </div>
-            <button type="submit" className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition-colors mt-2">
-              Continue
-            </button>
-          </form>
-        </div>
+            <h1 className="text-3xl font-light mb-2 text-center">Welcome Back</h1>
+            <p className="text-white/60 text-center mb-8 text-sm">Sign in to sync your tasks and notes</p>
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Email Address</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  required
+                  placeholder="you@example.com"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors"
+                />
+              </div>
+              <button type="submit" className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition-colors mt-2">
+                Continue
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative font-sans">
+    <div className="flex flex-col h-screen overflow-hidden relative font-sans bg-black">
       {/* Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {bgMedia?.type === 'video' ? (
@@ -559,8 +580,22 @@ export default function App() {
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full p-8">
+      {isAppLoading ? (
+        <div className="relative z-10 flex flex-col h-full items-center justify-center animate-in fade-in duration-1000">
+          <div className="relative flex items-center justify-center w-32 h-32 mb-8">
+            <div className="absolute inset-0 border-t-2 border-white/20 border-r-2 rounded-full animate-spin" style={{ animationDuration: '3s' }}></div>
+            <div className="absolute inset-2 border-b-2 border-white/40 border-l-2 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+            <div className="absolute inset-4 border-t-2 border-white/60 border-l-2 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+            <div className="p-4 bg-white/10 rounded-full backdrop-blur-md border border-white/10 animate-pulse">
+              <CheckSquare size={32} className="text-white" />
+            </div>
+          </div>
+          <h2 className="text-white/80 font-light tracking-[0.3em] uppercase text-sm animate-pulse">Loading Workspace</h2>
+        </div>
+      ) : (
+        <>
+          {/* Content */}
+          <div className="relative z-10 flex flex-col h-full p-8 animate-in fade-in duration-700">
         {/* Top Bar */}
         <div className="flex justify-between items-center mb-8">
           <button onClick={() => setIsBgModalOpen(true)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 text-sm flex items-center gap-2 text-white transition-all">
@@ -894,6 +929,8 @@ export default function App() {
             Try it now
           </button>
         </div>
+      )}
+        </>
       )}
     </div>
   );
