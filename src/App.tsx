@@ -25,23 +25,9 @@ type ModalState = {
 const INITIAL_TASKS: Task[] = [
   {
     id: '1',
-    time: '06:00',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
-    status: 'todo'
-  },
-  {
-    id: '2',
-    time: '07:00',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
-    status: 'todo'
-  },
-  {
-    id: '3',
-    time: '08:30',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
+    time: '09:00',
+    title: 'Welcome to your Workspace',
+    description: 'This is a default task. You can edit it, change its status, or delete it. Add new tasks by clicking the + button.',
     status: 'todo'
   }
 ];
@@ -49,18 +35,8 @@ const INITIAL_TASKS: Task[] = [
 const INITIAL_NOTES: Note[] = [
   {
     id: '1',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.'
-  },
-  {
-    id: '2',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.'
-  },
-  {
-    id: '3',
-    title: 'Plan For the Day...',
-    description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.'
+    title: 'Getting Started',
+    description: 'Welcome to your notes! This is a great place to jot down ideas, save links, or write long-form content. Feel free to edit or delete this note.'
   }
 ];
 
