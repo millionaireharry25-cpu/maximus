@@ -1,5 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2 } from 'lucide-react';
+import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell } from 'lucide-react';
+
+type Ad = {
+  id: string;
+  title: string;
+  isActive: boolean;
+  type: 'image' | 'video' | 'embed' | 'text';
+  mediaUrl: string;
+  embedCode: string;
+  text: string;
+  linkUrl: string;
+  intervalMinutes: number;
+};
+
+type AdminMessage = {
+  id: string;
+  from?: string;
+  to: string;
+  subject: string;
+  body: string;
+  timestamp: number;
+};
 
 type Task = {
   id: string;
@@ -48,38 +69,38 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onStatusChange }) => {
   return (
-    <div className="w-full sm:w-[340px] h-[420px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl relative overflow-hidden group">
-      <div className="text-[5.5rem] leading-none font-display font-light text-center mb-6 tracking-tighter">
+    <div className="w-full sm:w-[280px] h-[360px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-5 flex flex-col text-white shadow-2xl relative overflow-hidden group">
+      <div className="text-[3.5rem] leading-none font-display font-light text-center mb-3 tracking-tighter">
         {task.time}
       </div>
       
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-white/20 border border-white/10 rounded-full px-3 py-1 text-xs flex items-center gap-1.5 backdrop-blur-md">
-          <Check size={12} />
+      <div className="flex items-center gap-2 mb-3">
+        <div className="bg-white/20 border border-white/10 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+          <Check size={10} />
           <span>Task</span>
         </div>
-        <h3 className="text-xl font-medium truncate">{task.title}</h3>
+        <h3 className="text-lg font-medium truncate">{task.title}</h3>
       </div>
       
-      <p className="text-sm text-white/70 line-clamp-4 mb-6 flex-grow leading-relaxed">
+      <p className="text-xs text-white/70 line-clamp-4 mb-4 flex-grow leading-relaxed">
         {task.description}
       </p>
       
       <div className="flex justify-end gap-2 mt-auto">
         {task.status === 'todo' && (
-          <button onClick={() => onStatusChange(task.id, 'in-progress')} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm flex items-center gap-2 transition-all">
-            <Clock size={14} />
+          <button onClick={() => onStatusChange(task.id, 'in-progress')} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5 transition-all">
+            <Clock size={12} />
             <span>Start</span>
           </button>
         )}
         {task.status === 'in-progress' && (
-          <button onClick={() => onStatusChange(task.id, 'done')} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm flex items-center gap-2 transition-all">
-            <Check size={14} />
+          <button onClick={() => onStatusChange(task.id, 'done')} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5 transition-all">
+            <Check size={12} />
             <span>Done</span>
           </button>
         )}
-        <button onClick={() => onEdit(task)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm flex items-center gap-2 transition-all">
-          <Edit size={14} />
+        <button onClick={() => onEdit(task)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5 transition-all">
+          <Edit size={12} />
           <span>Edit</span>
         </button>
       </div>
@@ -95,26 +116,26 @@ interface NoteCardProps {
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
   return (
-    <div className="w-full sm:w-[340px] h-[260px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="bg-white/20 border border-white/10 rounded-full px-3 py-1 text-xs flex items-center gap-1.5 backdrop-blur-md">
-          <FileText size={12} />
+    <div className="w-full sm:w-[280px] h-[240px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-5 flex flex-col text-white shadow-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="bg-white/20 border border-white/10 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md">
+          <FileText size={10} />
           <span>Note</span>
         </div>
-        <h3 className="text-xl font-medium truncate">{note.title}</h3>
+        <h3 className="text-lg font-medium truncate">{note.title}</h3>
       </div>
       
-      <p className="text-sm text-white/70 line-clamp-4 mb-6 flex-grow leading-relaxed">
+      <p className="text-xs text-white/70 line-clamp-4 mb-4 flex-grow leading-relaxed">
         {note.description}
       </p>
       
       <div className="flex justify-end gap-2 mt-auto">
-        <button onClick={() => onDelete(note.id)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm flex items-center gap-2 transition-all">
-          <X size={14} />
+        <button onClick={() => onDelete(note.id)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5 transition-all">
+          <X size={12} />
           <span>Delete</span>
         </button>
-        <button onClick={() => onEdit(note)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-2 text-sm flex items-center gap-2 transition-all">
-          <Edit size={14} />
+        <button onClick={() => onEdit(note)} className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-3 py-1.5 text-xs flex items-center gap-1.5 transition-all">
+          <Edit size={12} />
           <span>Edit</span>
         </button>
       </div>
@@ -261,6 +282,25 @@ export default function App() {
   const [showMusicToast, setShowMusicToast] = useState(false);
   const [isAppLoading, setIsAppLoading] = useState(true);
   
+  // Admin & Ad State
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [editingAd, setEditingAd] = useState<Ad | null>(null);
+  const [adminMessages, setAdminMessages] = useState<AdminMessage[]>([]);
+  const [adminTab, setAdminTab] = useState<'ads' | 'messages'>('ads');
+  
+  // User Ad & Message State
+  const [currentAdToShow, setCurrentAdToShow] = useState<Ad | null>(null);
+  const [showAdToast, setShowAdToast] = useState(false);
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [readMessages, setReadMessages] = useState<string[]>([]);
+  const [deletedMessages, setDeletedMessages] = useState<string[]>([]);
+  const [userReplyTo, setUserReplyTo] = useState<AdminMessage | null>(null);
+  const [adminReplyTo, setAdminReplyTo] = useState<AdminMessage | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ message: string, onConfirm: () => void } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -269,6 +309,84 @@ export default function App() {
     const timer = setTimeout(() => setIsAppLoading(false), 3500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  // Load global ads and messages
+  useEffect(() => {
+    const savedAds = localStorage.getItem('global_ads');
+    if (savedAds) {
+      try {
+        setAds(JSON.parse(savedAds));
+      } catch (e) {
+        console.error("Failed to parse ads", e);
+      }
+    } else {
+      // Migrate old ad config if it exists
+      const oldAd = localStorage.getItem('global_ad_config');
+      if (oldAd) {
+        try {
+          const parsed = JSON.parse(oldAd);
+          setAds([{ ...parsed, id: '1', title: 'Default Ad', intervalMinutes: 5 }]);
+        } catch (e) {}
+      }
+    }
+
+    const savedMsgs = localStorage.getItem('global_messages');
+    if (savedMsgs) {
+      try {
+        setAdminMessages(JSON.parse(savedMsgs));
+      } catch (e) {}
+    }
+  }, []);
+
+  // Load user read and deleted messages
+  useEffect(() => {
+    if (userEmail) {
+      const savedRead = localStorage.getItem(`read_msgs_${userEmail}`);
+      if (savedRead) {
+        try {
+          setReadMessages(JSON.parse(savedRead));
+        } catch (e) {}
+      }
+      const savedDeleted = localStorage.getItem(`deleted_msgs_${userEmail}`);
+      if (savedDeleted) {
+        try {
+          setDeletedMessages(JSON.parse(savedDeleted));
+        } catch (e) {}
+      }
+    }
+  }, [userEmail]);
+
+  // Ad Rotation Logic
+  useEffect(() => {
+    if (!userEmail || ads.length === 0) return;
+    const activeAds = ads.filter(a => a.isActive);
+    if (activeAds.length === 0) return;
+
+    const intervals = activeAds.map(ad => {
+      return setInterval(() => {
+        setCurrentAdToShow(ad);
+        setShowAdToast(true);
+      }, ad.intervalMinutes * 60 * 1000);
+    });
+
+    // Show first active ad after 8 seconds
+    const initialTimeout = setTimeout(() => {
+      setCurrentAdToShow(activeAds[0]);
+      setShowAdToast(true);
+    }, 8000);
+
+    return () => {
+      intervals.forEach(clearInterval);
+      clearTimeout(initialTimeout);
+    };
+  }, [userEmail, ads]);
 
   // Load data on login
   useEffect(() => {
@@ -301,12 +419,22 @@ export default function App() {
         }, 5000);
       }
       setIsDataLoaded(true);
+      
+      // Show ad toast if active
+      const activeAds = ads.filter(a => a.isActive);
+      if (activeAds.length > 0) {
+        setTimeout(() => {
+          setCurrentAdToShow(activeAds[0]);
+          setShowAdToast(true);
+        }, 8000); // Show after music toast
+      }
     } else {
       setIsDataLoaded(false);
       setShowMusicToast(false);
+      setShowAdToast(false);
     }
     return () => clearTimeout(timeoutId);
-  }, [userEmail]);
+  }, [userEmail, ads]);
 
   // Save data on change
   useEffect(() => {
@@ -482,6 +610,433 @@ export default function App() {
     setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
   };
 
+  const handleAdminLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const pin = new FormData(e.currentTarget).get('pin') as string;
+    if (pin === '4529') {
+      setIsAdminLoggedIn(true);
+      setIsAdminLoginOpen(false);
+    } else {
+      setToastMessage('Invalid PIN');
+    }
+  };
+
+  const handleSaveAd = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newAd: Ad = {
+      id: editingAd ? editingAd.id : Date.now().toString(),
+      title: formData.get('title') as string,
+      isActive: formData.get('isActive') === 'on',
+      intervalMinutes: Number(formData.get('intervalMinutes')) || 5,
+      type: formData.get('type') as Ad['type'],
+      mediaUrl: formData.get('mediaUrl') as string,
+      embedCode: formData.get('embedCode') as string,
+      text: formData.get('text') as string,
+      linkUrl: formData.get('linkUrl') as string,
+    };
+    
+    let updatedAds;
+    if (editingAd) {
+      updatedAds = ads.map(a => a.id === editingAd.id ? newAd : a);
+    } else {
+      updatedAds = [...ads, newAd];
+    }
+    setAds(updatedAds);
+    localStorage.setItem('global_ads', JSON.stringify(updatedAds));
+    setEditingAd(null);
+    setToastMessage('Advertisement saved successfully!');
+  };
+
+  const handleDeleteAd = (id: string) => {
+    setConfirmAction({
+      message: 'Are you sure you want to delete this advertisement?',
+      onConfirm: () => {
+        const updated = ads.filter(a => a.id !== id);
+        setAds(updated);
+        localStorage.setItem('global_ads', JSON.stringify(updated));
+        setConfirmAction(null);
+      }
+    });
+  };
+
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newMsg: AdminMessage = {
+      id: Date.now().toString(),
+      from: isAdminLoggedIn ? 'admin' : (userEmail || 'unknown'),
+      to: formData.get('to') as string,
+      subject: formData.get('subject') as string,
+      body: formData.get('body') as string,
+      timestamp: Date.now()
+    };
+    const updated = [newMsg, ...adminMessages];
+    setAdminMessages(updated);
+    localStorage.setItem('global_messages', JSON.stringify(updated));
+    (e.target as HTMLFormElement).reset();
+    
+    if (isAdminLoggedIn) {
+      setAdminReplyTo(null);
+      setToastMessage('Message sent successfully!');
+    } else {
+      setUserReplyTo(null);
+      setToastMessage('Reply sent to admin!');
+    }
+  };
+
+  const handleAdminDeleteMessage = (id: string) => {
+    setConfirmAction({
+      message: 'Delete this message globally?',
+      onConfirm: () => {
+        const updated = adminMessages.filter(m => m.id !== id);
+        setAdminMessages(updated);
+        localStorage.setItem('global_messages', JSON.stringify(updated));
+        setConfirmAction(null);
+      }
+    });
+  };
+
+  const handleUserDeleteMessage = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmAction({
+      message: 'Delete this message from your inbox?',
+      onConfirm: () => {
+        const updated = [...deletedMessages, id];
+        setDeletedMessages(updated);
+        localStorage.setItem(`deleted_msgs_${userEmail}`, JSON.stringify(updated));
+        setConfirmAction(null);
+      }
+    });
+  };
+
+  const userMessages = adminMessages
+    .filter(m => (m.to === 'all' || m.to === userEmail || m.from === userEmail) && !deletedMessages.includes(m.id))
+    .sort((a,b) => b.timestamp - a.timestamp);
+  
+  const unreadCount = userMessages.filter(m => m.to !== 'admin' && m.from !== userEmail && !readMessages.includes(m.id)).length;
+
+  const markAsRead = (id: string) => {
+    if (!readMessages.includes(id)) {
+      const updated = [...readMessages, id];
+      setReadMessages(updated);
+      localStorage.setItem(`read_msgs_${userEmail}`, JSON.stringify(updated));
+    }
+  };
+
+  if (isAdminLoggedIn) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8 font-sans overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white/10 rounded-xl">
+                <Shield size={24} className="text-emerald-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-light">Admin Panel</h1>
+                <p className="text-white/50 text-sm">Manage Global Settings</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setIsAdminLoggedIn(false)}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <LogOut size={16} />
+              Exit Admin
+            </button>
+          </div>
+
+          <div className="flex gap-4 mb-8">
+            <button 
+              onClick={() => setAdminTab('ads')}
+              className={`px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${adminTab === 'ads' ? 'bg-emerald-500 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+            >
+              <Megaphone size={18} />
+              Advertisements
+            </button>
+            <button 
+              onClick={() => setAdminTab('messages')}
+              className={`px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${adminTab === 'messages' ? 'bg-emerald-500 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+            >
+              <Send size={18} />
+              Send Messages
+            </button>
+          </div>
+
+          {adminTab === 'ads' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 space-y-4">
+                <button 
+                  onClick={() => setEditingAd(null)}
+                  className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl p-4 flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Plus size={20} />
+                  Create New Ad
+                </button>
+                
+                {ads.map(ad => (
+                  <div key={ad.id} className={`bg-white/5 border rounded-2xl p-4 transition-colors ${editingAd?.id === ad.id ? 'border-emerald-500/50' : 'border-white/10'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium truncate pr-2">{ad.title}</h3>
+                      <div className="flex gap-1">
+                        <button onClick={() => setEditingAd(ad)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+                          <Edit size={14} />
+                        </button>
+                        <button onClick={() => handleDeleteAd(ad.id)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-red-400">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-white/50">
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} /> Every {ad.intervalMinutes}m
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full ${ad.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/40'}`}>
+                        {ad.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8">
+                <h2 className="text-xl font-medium mb-6 flex items-center gap-2">
+                  <Megaphone size={20} />
+                  {editingAd ? 'Edit Advertisement' : 'New Advertisement'}
+                </h2>
+                
+                <form onSubmit={handleSaveAd} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm text-white/60 mb-2">Ad Title (Internal)</label>
+                      <input 
+                        type="text" 
+                        name="title" 
+                        required
+                        defaultValue={editingAd?.title || ''}
+                        placeholder="Summer Promo"
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-white/60 mb-2">Interval (Minutes)</label>
+                      <input 
+                        type="number" 
+                        name="intervalMinutes" 
+                        required
+                        min="1"
+                        defaultValue={editingAd?.intervalMinutes || 5}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+                    <input 
+                      type="checkbox" 
+                      id="isActive" 
+                      name="isActive" 
+                      defaultChecked={editingAd ? editingAd.isActive : true}
+                      className="w-5 h-5 rounded border-white/20 bg-black/50 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-black"
+                    />
+                    <label htmlFor="isActive" className="font-medium cursor-pointer">Enable this Advertisement</label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm text-white/60 mb-2">Media Type</label>
+                      <select 
+                        name="type" 
+                        defaultValue={editingAd?.type || 'image'}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                      >
+                        <option value="image">Image</option>
+                        <option value="video">Video (MP4/WebM)</option>
+                        <option value="embed">Embed Code (YouTube/Vimeo)</option>
+                        <option value="text">Text Only</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-white/60 mb-2">Media URL (For Image/Video)</label>
+                      <input 
+                        type="text" 
+                        name="mediaUrl" 
+                        defaultValue={editingAd?.mediaUrl || ''}
+                        placeholder="https://example.com/image.png"
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Embed Code (For YouTube/Vimeo/etc)</label>
+                    <textarea 
+                      name="embedCode" 
+                      defaultValue={editingAd?.embedCode || ''}
+                      placeholder='<iframe src="..."></iframe>'
+                      rows={3}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 font-mono text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Advertisement Text</label>
+                    <textarea 
+                      name="text" 
+                      defaultValue={editingAd?.text || ''}
+                      placeholder="Check out this amazing new feature..."
+                      rows={2}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Action Link URL</label>
+                    <input 
+                      type="text" 
+                      name="linkUrl" 
+                      defaultValue={editingAd?.linkUrl || ''}
+                      placeholder="https://example.com/offer"
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10">
+                    <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-medium transition-colors">
+                      {editingAd ? 'Save Changes' : 'Create Advertisement'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {adminTab === 'messages' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-medium flex items-center gap-2">
+                    <Send size={20} />
+                    {adminReplyTo ? 'Reply to Message' : 'Send New Message'}
+                  </h2>
+                  {adminReplyTo && (
+                    <button onClick={() => setAdminReplyTo(null)} className="text-white/50 hover:text-white text-sm">Cancel Reply</button>
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Recipient Email</label>
+                    <input 
+                      type="text" 
+                      name="to" 
+                      required
+                      defaultValue={adminReplyTo ? (adminReplyTo.from === 'admin' ? adminReplyTo.to : (adminReplyTo.from || '')) : ''}
+                      placeholder="user@example.com OR 'all' for everyone"
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Subject</label>
+                    <input 
+                      type="text" 
+                      name="subject" 
+                      required
+                      defaultValue={adminReplyTo ? (adminReplyTo.subject.startsWith('Re:') ? adminReplyTo.subject : `Re: ${adminReplyTo.subject}`) : ''}
+                      placeholder="Important Update"
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Message Body</label>
+                    <textarea 
+                      name="body" 
+                      required
+                      rows={5}
+                      placeholder="Write your message here..."
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                  <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-medium transition-colors">
+                    {adminReplyTo ? 'Send Reply' : 'Send Message'}
+                  </button>
+                </form>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col">
+                <h2 className="text-xl font-medium mb-6 flex items-center gap-2">
+                  <MessageSquare size={20} />
+                  All Messages
+                </h2>
+                <div className="flex-grow overflow-y-auto space-y-4 pr-2">
+                  {adminMessages.length === 0 ? (
+                    <p className="text-white/40 text-center py-8">No messages yet</p>
+                  ) : (
+                    adminMessages.map(msg => (
+                      <div key={msg.id} className="bg-black/30 border border-white/10 rounded-xl p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium">{msg.subject}</h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider">
+                              {new Date(msg.timestamp).toLocaleDateString()}
+                            </span>
+                            <button onClick={() => setAdminReplyTo(msg)} className="text-white/50 hover:text-white transition-colors" title="Reply">
+                              <MessageSquare size={14} />
+                            </button>
+                            <button onClick={() => handleAdminDeleteMessage(msg.id)} className="text-red-400/50 hover:text-red-400 transition-colors" title="Delete">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex gap-4 mb-2">
+                          <p className="text-xs text-emerald-400">From: {msg.from || 'admin'}</p>
+                          <p className="text-xs text-blue-400">To: {msg.to}</p>
+                        </div>
+                        <p className="text-sm text-white/70 line-clamp-2">{msg.body}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-2xl font-medium animate-in slide-in-from-top-4 fade-in duration-300">
+            {toastMessage}
+          </div>
+        )}
+
+        {/* Confirm Action Modal */}
+        {confirmAction && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-white shadow-2xl animate-in zoom-in-95 duration-200">
+              <h3 className="text-xl font-medium mb-4">Confirm Action</h3>
+              <p className="text-white/70 mb-6">{confirmAction.message}</p>
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setConfirmAction(null)} 
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmAction.onConfirm} 
+                  className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 transition-colors text-sm font-medium"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!userEmail) {
     return (
       <div className="flex flex-col h-screen items-center justify-center relative font-sans p-4 overflow-hidden bg-black">
@@ -531,6 +1086,49 @@ export default function App() {
                 Continue
               </button>
             </form>
+
+            <div className="mt-6 pt-6 border-t border-white/10 flex justify-center">
+              <button 
+                onClick={() => setIsAdminLoginOpen(true)}
+                className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-2 text-xs"
+              >
+                <Lock size={12} />
+                Admin Access
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Admin Login Modal */}
+        {isAdminLoginOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 w-full max-w-sm text-white shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-medium flex items-center gap-2">
+                  <Lock size={20} className="text-emerald-400" />
+                  Admin Login
+                </h2>
+                <button onClick={() => setIsAdminLoginOpen(false)} className="text-white/50 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleAdminLogin} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Secret PIN</label>
+                  <input 
+                    type="password" 
+                    name="pin" 
+                    required
+                    autoFocus
+                    placeholder="••••"
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors text-center tracking-[0.5em] text-lg"
+                  />
+                </div>
+                <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-medium transition-colors mt-2">
+                  Access Panel
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
@@ -595,10 +1193,22 @@ export default function App() {
             </button>
           </div>
 
-          <button onClick={() => setIsSettingsOpen(true)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-5 py-2 text-sm flex items-center gap-2 text-white transition-all">
-            <Settings size={16} />
-            <span className="hidden sm:inline">Settings</span>
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsInboxOpen(true)} 
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-5 py-2 text-sm flex items-center gap-2 text-white transition-all relative"
+            >
+              <Inbox size={16} />
+              <span className="hidden sm:inline">Inbox</span>
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-black"></span>
+              )}
+            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-5 py-2 text-sm flex items-center gap-2 text-white transition-all">
+              <Settings size={16} />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+          </div>
         </div>
 
         {/* Main Scrollable Area */}
@@ -614,7 +1224,7 @@ export default function App() {
                   onStatusChange={handleTaskStatus} 
                 />
               ))}
-              <AddCard onClick={() => openModal('task', 'add')} heightClass="h-[420px]" />
+              <AddCard onClick={() => openModal('task', 'add')} heightClass="h-[360px]" />
             </div>
           ) : (
             <div className="flex flex-wrap gap-6 pb-4 items-start content-start">
@@ -626,7 +1236,7 @@ export default function App() {
                   onDelete={(id) => handleDelete('note', id)} 
                 />
               ))}
-              <AddCard onClick={() => openModal('note', 'add')} heightClass="h-[260px]" />
+              <AddCard onClick={() => openModal('note', 'add')} heightClass="h-[240px]" />
             </div>
           )}
 
@@ -904,6 +1514,202 @@ export default function App() {
           >
             Try it now
           </button>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-2xl font-medium animate-in slide-in-from-top-4 fade-in duration-300">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Confirm Action Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-white shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-medium mb-4">Confirm Action</h3>
+            <p className="text-white/70 mb-6">{confirmAction.message}</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setConfirmAction(null)} 
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmAction.onConfirm} 
+                className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 transition-colors text-sm font-medium"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Advertisement Toast */}
+      {showAdToast && currentAdToShow && currentAdToShow.isActive && (
+        <div className="fixed bottom-6 left-6 z-40 bg-zinc-900/90 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-5 shadow-2xl w-[320px] animate-in slide-in-from-bottom-8 fade-in duration-500">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-emerald-500/20 rounded-full">
+                <Megaphone size={16} className="text-emerald-400" />
+              </div>
+              <h3 className="font-medium text-sm">{currentAdToShow.title}</h3>
+            </div>
+            <button onClick={() => setShowAdToast(false)} className="text-white/50 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          
+          {currentAdToShow.type === 'image' && currentAdToShow.mediaUrl && (
+            <div className="relative w-full rounded-xl overflow-hidden mb-4 bg-black/50">
+              <img 
+                src={currentAdToShow.mediaUrl} 
+                alt="Advertisement"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
+
+          {currentAdToShow.type === 'video' && currentAdToShow.mediaUrl && (
+            <div className="relative w-full rounded-xl overflow-hidden mb-4 bg-black/50">
+              <video 
+                src={currentAdToShow.mediaUrl} 
+                autoPlay 
+                loop 
+                muted 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
+
+          {currentAdToShow.type === 'embed' && currentAdToShow.embedCode && (
+            <div 
+              className="relative w-full rounded-xl overflow-hidden mb-4 bg-black/50 aspect-video [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:absolute [&>iframe]:top-0 [&>iframe]:left-0"
+              dangerouslySetInnerHTML={{ __html: currentAdToShow.embedCode }}
+            />
+          )}
+
+          {currentAdToShow.text && (
+            <p className="text-xs text-white/80 mb-4 leading-relaxed">
+              {currentAdToShow.text}
+            </p>
+          )}
+
+          {currentAdToShow.linkUrl && (
+            <a 
+              href={currentAdToShow.linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setShowAdToast(false)}
+              className="w-full bg-emerald-500 text-white rounded-xl py-2 text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+            >
+              Learn More
+              <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Inbox Modal */}
+      {isInboxOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-md text-white shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/10 rounded-xl">
+                  <Inbox size={20} />
+                </div>
+                <h2 className="text-xl font-medium">Inbox</h2>
+              </div>
+              <button onClick={() => { setIsInboxOpen(false); setUserReplyTo(null); }} className="text-white/50 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {userReplyTo ? (
+              <div className="flex-grow flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-medium text-emerald-400">Reply to Admin</h3>
+                  <button onClick={() => setUserReplyTo(null)} className="text-xs text-white/50 hover:text-white">Cancel</button>
+                </div>
+                <form onSubmit={handleSendMessage} className="space-y-4 flex-grow flex flex-col">
+                  <input type="hidden" name="to" value="admin" />
+                  <div>
+                    <label className="block text-xs text-white/60 mb-1">Subject</label>
+                    <input 
+                      type="text" 
+                      name="subject" 
+                      required
+                      defaultValue={userReplyTo.subject.startsWith('Re:') ? userReplyTo.subject : `Re: ${userReplyTo.subject}`}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-white/30 text-sm"
+                    />
+                  </div>
+                  <div className="flex-grow flex flex-col">
+                    <label className="block text-xs text-white/60 mb-1">Message</label>
+                    <textarea 
+                      name="body" 
+                      required
+                      className="w-full flex-grow bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-white/30 text-sm resize-none min-h-[150px]"
+                      placeholder="Type your reply..."
+                    />
+                  </div>
+                  <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-medium transition-colors mt-auto">
+                    Send Reply
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="flex-grow overflow-y-auto space-y-3 pr-2 scrollbar-hide">
+                {userMessages.length === 0 ? (
+                  <div className="text-center py-12 text-white/40">
+                    <Bell size={32} className="mx-auto mb-3 opacity-50" />
+                    <p>No messages yet</p>
+                  </div>
+                ) : (
+                  userMessages.map(msg => {
+                    const isUnread = msg.to !== 'admin' && msg.from !== userEmail && !readMessages.includes(msg.id);
+                    const isSentByMe = msg.from === userEmail;
+                    return (
+                      <div 
+                        key={msg.id} 
+                        onClick={() => !isSentByMe && markAsRead(msg.id)}
+                        className={`p-4 rounded-2xl border transition-colors ${isUnread ? 'bg-white/10 border-white/20 cursor-pointer' : 'bg-black/30 border-white/5'}`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className={`font-medium ${isUnread ? 'text-white' : 'text-white/70'}`}>
+                            {msg.subject}
+                            {isUnread && <span className="ml-2 inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider">
+                              {new Date(msg.timestamp).toLocaleDateString()}
+                            </span>
+                            {!isSentByMe && (
+                              <button onClick={(e) => { e.stopPropagation(); setUserReplyTo(msg); }} className="text-white/50 hover:text-white transition-colors" title="Reply">
+                                <MessageSquare size={14} />
+                              </button>
+                            )}
+                            <button onClick={(e) => handleUserDeleteMessage(msg.id, e)} className="text-red-400/50 hover:text-red-400 transition-colors" title="Delete">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-white/40 mb-2">
+                          {isSentByMe ? 'Sent to Admin' : (msg.from === 'admin' ? 'From: Admin' : `From: ${msg.from}`)}
+                        </p>
+                        <p className={`text-sm ${isUnread ? 'text-white/80' : 'text-white/50'}`}>
+                          {msg.body}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
         </>
