@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2 } from 'lucide-react';
 
 type Task = {
   id: string;
@@ -72,7 +72,7 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onStatusChange }) => {
   return (
-    <div className="min-w-[340px] w-[340px] h-[420px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl snap-center relative overflow-hidden group">
+    <div className="w-full sm:w-[340px] h-[420px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl relative overflow-hidden group">
       <div className="text-[5.5rem] leading-none font-display font-light text-center mb-6 tracking-tighter">
         {task.time}
       </div>
@@ -119,7 +119,7 @@ interface NoteCardProps {
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) => {
   return (
-    <div className="min-w-[340px] w-[340px] h-[260px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl snap-center">
+    <div className="w-full sm:w-[340px] h-[260px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-6 flex flex-col text-white shadow-2xl">
       <div className="flex items-center gap-3 mb-4">
         <div className="bg-white/20 border border-white/10 rounded-full px-3 py-1 text-xs flex items-center gap-1.5 backdrop-blur-md">
           <FileText size={12} />
@@ -261,16 +261,18 @@ const Modal: React.FC<ModalProps> = ({ state, onClose, onSave, onDelete }) => {
 };
 
 export default function App() {
+  const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem('currentUser'));
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [activeTab, setActiveTab] = useState<'tasks' | 'notes'>('tasks');
-  const [bgMedia, setBgMedia] = useState<{ type: 'image' | 'video', url: string } | null>({
-    type: 'image',
-    url: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=2070&auto=format&fit=crop'
+  const [bgMedia, setBgMedia] = useState<{ type: 'image' | 'video' | 'iframe', url: string } | null>({
+    type: 'iframe',
+    url: 'https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1'
   });
   
   const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'task', mode: 'add' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [playlist, setPlaylist] = useState<{ url: string, name: string }[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -279,10 +281,75 @@ export default function App() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [showMusicToast, setShowMusicToast] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Load data on login
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (userEmail) {
+      const savedData = localStorage.getItem(`appData_${userEmail}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setTasks(parsed.tasks || INITIAL_TASKS);
+          setNotes(parsed.notes || INITIAL_NOTES);
+          if (parsed.bgMedia) {
+            setBgMedia(parsed.bgMedia);
+          } else {
+            setBgMedia({ type: 'iframe', url: 'https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1' });
+          }
+          if (parsed.playlist) setPlaylist(parsed.playlist);
+        } catch (e) {
+          console.error("Failed to parse saved data", e);
+        }
+      } else {
+        setTasks(INITIAL_TASKS);
+        setNotes(INITIAL_NOTES);
+        setPlaylist([]);
+        setBgMedia({ type: 'iframe', url: 'https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1' });
+        
+        // Show music feature toast for new users after 5 seconds
+        timeoutId = setTimeout(() => {
+          setShowMusicToast(true);
+        }, 5000);
+      }
+      setIsDataLoaded(true);
+    } else {
+      setIsDataLoaded(false);
+      setShowMusicToast(false);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [userEmail]);
+
+  // Save data on change
+  useEffect(() => {
+    if (userEmail && isDataLoaded) {
+      localStorage.setItem(`appData_${userEmail}`, JSON.stringify({
+        tasks, notes, bgMedia, playlist
+      }));
+    }
+  }, [tasks, notes, bgMedia, playlist, userEmail, isDataLoaded]);
+
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const email = new FormData(e.currentTarget).get('email') as string;
+    if (email) {
+      setUserEmail(email);
+      localStorage.setItem('currentUser', email);
+    }
+  };
+
+  const handleLogout = () => {
+    setUserEmail(null);
+    localStorage.removeItem('currentUser');
+    setIsSettingsOpen(false);
+    setIsMusicPlaying(false);
+  };
 
   useEffect(() => {
     if (audioRef.current) {
@@ -366,6 +433,22 @@ export default function App() {
     }
   };
 
+  const removeTrack = (indexToRemove: number) => {
+    setPlaylist(prev => {
+      const newPlaylist = prev.filter((_, index) => index !== indexToRemove);
+      if (newPlaylist.length === 0) {
+        setIsMusicPlaying(false);
+        setCurrentTrackIndex(0);
+        setProgress(0);
+      } else if (currentTrackIndex >= newPlaylist.length) {
+        setCurrentTrackIndex(newPlaylist.length - 1);
+      } else if (currentTrackIndex === indexToRemove) {
+        setProgress(0);
+      }
+      return newPlaylist;
+    });
+  };
+
   const toggleMusic = () => {
     setIsMusicPlaying(!isMusicPlaying);
   };
@@ -417,12 +500,59 @@ export default function App() {
     setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
   };
 
+  if (!userEmail) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center relative font-sans p-4 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <iframe 
+            src="https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1" 
+            className="w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" 
+            frameBorder="0" 
+            allow="autoplay; fullscreen; picture-in-picture" 
+          />
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+        <div className="relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-8 w-full max-w-md text-white shadow-2xl">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-white/20 rounded-full backdrop-blur-md border border-white/10">
+              <CheckSquare size={32} />
+            </div>
+          </div>
+          <h1 className="text-3xl font-light mb-2 text-center">Welcome Back</h1>
+          <p className="text-white/60 text-center mb-8 text-sm">Sign in to sync your tasks and notes</p>
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Email Address</label>
+              <input 
+                type="email" 
+                name="email" 
+                required
+                placeholder="you@example.com"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors"
+              />
+            </div>
+            <button type="submit" className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition-colors mt-2">
+              Continue
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden relative font-sans">
       {/* Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         {bgMedia?.type === 'video' ? (
           <video src={bgMedia.url} autoPlay loop muted className="w-full h-full object-cover" />
+        ) : bgMedia?.type === 'iframe' ? (
+          <iframe 
+            src={bgMedia.url} 
+            className="w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" 
+            frameBorder="0" 
+            allow="autoplay; fullscreen; picture-in-picture" 
+          />
         ) : (
           <img src={bgMedia?.url} alt="Background" className="w-full h-full object-cover" />
         )}
@@ -433,7 +563,7 @@ export default function App() {
       <div className="relative z-10 flex flex-col h-full p-8">
         {/* Top Bar */}
         <div className="flex justify-between items-center mb-8">
-          <button onClick={() => fileInputRef.current?.click()} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 text-sm flex items-center gap-2 text-white transition-all">
+          <button onClick={() => setIsBgModalOpen(true)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 text-sm flex items-center gap-2 text-white transition-all">
             <ImageIcon size={16} />
             <span className="hidden sm:inline">Change Background</span>
           </button>
@@ -502,6 +632,72 @@ export default function App() {
         />
       )}
 
+      {/* Background Selection Modal */}
+      {isBgModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-zinc-900/90 border border-white/10 rounded-3xl p-6 w-full max-w-md text-white shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Change Background</h2>
+              <button onClick={() => setIsBgModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={() => {
+                  setBgMedia({ type: 'iframe', url: 'https://player.vimeo.com/video/1169668529?background=1&autoplay=1&loop=1&muted=1' });
+                  setIsBgModalOpen(false);
+                }}
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 flex items-center gap-4 transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Play size={20} className="text-white/70" />
+                </div>
+                <div>
+                  <p className="font-medium">Default Video</p>
+                  <p className="text-xs text-white/50">Animated background</p>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => {
+                  setBgMedia({ type: 'image', url: 'https://i.postimg.cc/bvx9CrbN/Whisk-93e052c68ed3504851a4124bf1df14bddr.jpg' });
+                  setIsBgModalOpen(false);
+                }}
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 flex items-center gap-4 transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                  <ImageIcon size={20} className="text-white/70" />
+                </div>
+                <div>
+                  <p className="font-medium">Default Image</p>
+                  <p className="text-xs text-white/50">Static background</p>
+                </div>
+              </button>
+
+              <div className="h-px w-full bg-white/10 my-2"></div>
+
+              <button 
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  setIsBgModalOpen(false);
+                }}
+                className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl p-4 flex items-center gap-4 transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                  <Upload size={20} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-medium">Custom Upload</p>
+                  <p className="text-xs text-white/50">Upload your own image or video</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -517,19 +713,35 @@ export default function App() {
               {/* Account Sync */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                 <h3 className="text-sm font-medium text-white/60 uppercase tracking-wider mb-3">Account & Sync</h3>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm">Sync your data</p>
-                    <p className="text-xs text-white/50">Keep your tasks and notes updated</p>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="overflow-hidden pr-2">
+                      <p className="text-sm truncate">{userEmail}</p>
+                      <p className="text-xs text-white/50">Logged in</p>
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/20 rounded-xl px-3 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
+                    >
+                      <LogOut size={14} />
+                      <span className="hidden sm:inline">Logout</span>
+                    </button>
                   </div>
-                  <button 
-                    onClick={handleSync}
-                    disabled={isSyncing}
-                    className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all disabled:opacity-50"
-                  >
-                    <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-                    <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
-                  </button>
+                  <div className="h-px w-full bg-white/10 my-1"></div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm">Sync your data</p>
+                      <p className="text-xs text-white/50">Save to local storage</p>
+                    </div>
+                    <button 
+                      onClick={handleSync}
+                      disabled={isSyncing}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all disabled:opacity-50 shrink-0"
+                    >
+                      <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
+                      <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -540,14 +752,23 @@ export default function App() {
                 <div className="flex flex-col gap-4">
                   {playlist.length > 0 ? (
                     <div className="bg-black/20 rounded-xl p-4 border border-white/5">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                          <Music size={20} className="text-white/70" />
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                            <Music size={20} className="text-white/70" />
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-sm font-medium truncate">{playlist[currentTrackIndex].name}</p>
+                            <p className="text-xs text-white/50 truncate">Track {currentTrackIndex + 1} of {playlist.length}</p>
+                          </div>
                         </div>
-                        <div className="overflow-hidden">
-                          <p className="text-sm font-medium truncate">{playlist[currentTrackIndex].name}</p>
-                          <p className="text-xs text-white/50 truncate">Track {currentTrackIndex + 1} of {playlist.length}</p>
-                        </div>
+                        <button 
+                          onClick={() => removeTrack(currentTrackIndex)}
+                          className="p-2 hover:bg-red-500/20 text-red-400 rounded-full transition-colors shrink-0 ml-2"
+                          title="Remove Track"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
 
                       {/* Progress Bar */}
@@ -635,6 +856,44 @@ export default function App() {
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={handleTrackEnd}
         />
+      )}
+
+      {/* Music Feature Discovery Toast */}
+      {showMusicToast && (
+        <div className="fixed bottom-6 right-6 z-40 bg-zinc-900/90 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl w-[320px] animate-in slide-in-from-bottom-8 fade-in duration-500">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3 text-white">
+              <div className="p-2 bg-white/10 rounded-full">
+                <Music size={16} />
+              </div>
+              <h3 className="font-medium text-sm">Background Music</h3>
+            </div>
+            <button onClick={() => setShowMusicToast(false)} className="text-white/50 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          
+          <div className="relative w-full rounded-xl overflow-hidden mb-4 bg-black/50">
+            <img 
+              src="https://i.postimg.cc/YScC2f9n/Whisk-f8fab621eca94599a2442f39de1f483ddr.png" 
+              alt="Music Feature Demo"
+              className="w-full h-auto object-cover"
+            />
+          </div>
+
+          <p className="text-xs text-white/70 mb-4 leading-relaxed">
+            Did you know? You can upload and play your own background music to stay focused!
+          </p>
+          <button 
+            onClick={() => {
+              setShowMusicToast(false);
+              setIsSettingsOpen(true);
+            }}
+            className="w-full bg-white text-black rounded-xl py-2 text-sm font-medium hover:bg-gray-200 transition-colors"
+          >
+            Try it now
+          </button>
+        </div>
       )}
     </div>
   );
