@@ -1,8 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell } from 'lucide-react';
-import { auth, db, signInWithGoogle, logOut } from './firebase';
-import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, query, orderBy, getDoc, where, or } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 
 type Ad = {
   id: string;
@@ -261,9 +258,7 @@ const Modal: React.FC<ModalProps> = ({ state, onClose, onSave, onDelete }) => {
 };
 
 export default function App() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem('currentUser'));
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [activeTab, setActiveTab] = useState<'tasks' | 'notes'>('tasks');
@@ -288,6 +283,7 @@ export default function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
   
   // Admin & Ad State
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [ads, setAds] = useState<Ad[]>([]);
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
@@ -305,10 +301,6 @@ export default function App() {
   const [confirmAction, setConfirmAction] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
-  const unsubAdsRef = useRef<(() => void) | null>(null);
-  const unsubMsgsRef = useRef<(() => void) | null>(null);
-  const unsubUserRef = useRef<(() => void) | null>(null);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -319,118 +311,57 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUserEmail(user.email);
-        setUserId(user.uid);
-        
-        // Check if admin
-        if (user.email === 'millionaireharry25@gmail.com') {
-          setIsAdminLoggedIn(true);
-        } else {
-          try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists() && userDoc.data().role === 'admin') {
-              setIsAdminLoggedIn(true);
-            } else {
-              setIsAdminLoggedIn(false);
-            }
-          } catch (error) {
-            console.error("Error fetching user role:", error);
-            setIsAdminLoggedIn(false);
-          }
-        }
-      } else {
-        setUserEmail(null);
-        setUserId(null);
-        setIsAdminLoggedIn(false);
-      }
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     if (toastMessage) {
       const timer = setTimeout(() => setToastMessage(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
 
-  // Load global ads and messages from Firestore
+  // Load global ads and messages
   useEffect(() => {
-    if (!isAuthReady) return;
-
-    const unsubAds = onSnapshot(collection(db, 'ads'), (snapshot) => {
-      const adsData: Ad[] = [];
-      snapshot.forEach(doc => {
-        adsData.push({ id: doc.id, ...doc.data() } as Ad);
-      });
-      setAds(adsData);
-    }, (error) => {
-      console.error("Error fetching ads:", error);
-    });
-    unsubAdsRef.current = unsubAds;
-
-    let msgsQuery = query(collection(db, 'messages'));
-    
-    if (!isAdminLoggedIn && userEmail) {
-      msgsQuery = query(
-        collection(db, 'messages'),
-        or(
-          where('to', '==', 'all'),
-          where('to', '==', userEmail),
-          where('from', '==', userEmail)
-        )
-      );
-    } else if (!isAdminLoggedIn && !userEmail) {
-      // If not logged in and not admin, only get 'all' messages
-      msgsQuery = query(
-        collection(db, 'messages'),
-        where('to', '==', 'all')
-      );
+    const savedAds = localStorage.getItem('global_ads');
+    if (savedAds) {
+      try {
+        setAds(JSON.parse(savedAds));
+      } catch (e) {
+        console.error("Failed to parse ads", e);
+      }
+    } else {
+      // Migrate old ad config if it exists
+      const oldAd = localStorage.getItem('global_ad_config');
+      if (oldAd) {
+        try {
+          const parsed = JSON.parse(oldAd);
+          setAds([{ ...parsed, id: '1', title: 'Default Ad', intervalMinutes: 5 }]);
+        } catch (e) {}
+      }
     }
 
-    const unsubMsgs = onSnapshot(msgsQuery, (snapshot) => {
-      const msgsData: AdminMessage[] = [];
-      snapshot.forEach(doc => {
-        msgsData.push({ id: doc.id, ...doc.data() } as AdminMessage);
-      });
-      // Sort in client to avoid requiring a composite index
-      msgsData.sort((a, b) => b.timestamp - a.timestamp);
-      setAdminMessages(msgsData);
-    }, (error) => {
-      console.error("Error fetching messages:", error);
-    });
-    unsubMsgsRef.current = unsubMsgs;
-
-    return () => {
-      if (unsubAdsRef.current) unsubAdsRef.current();
-      if (unsubMsgsRef.current) unsubMsgsRef.current();
-    };
-  }, [isAuthReady, isAdminLoggedIn, userEmail]);
+    const savedMsgs = localStorage.getItem('global_messages');
+    if (savedMsgs) {
+      try {
+        setAdminMessages(JSON.parse(savedMsgs));
+      } catch (e) {}
+    }
+  }, []);
 
   // Load user read and deleted messages
   useEffect(() => {
-    if (userId) {
-      const unsubUser = onSnapshot(doc(db, 'users', userId), (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.readMessages) setReadMessages(data.readMessages);
-          if (data.deletedMessages) setDeletedMessages(data.deletedMessages);
-        } else {
-          // Create user doc if it doesn't exist
-          setDoc(doc(db, 'users', userId), { readMessages: [], deletedMessages: [], role: 'user' });
-        }
-      }, (error) => {
-        console.error("Error fetching user data:", error);
-      });
-      unsubUserRef.current = unsubUser;
-      return () => {
-        if (unsubUserRef.current) unsubUserRef.current();
-      };
+    if (userEmail) {
+      const savedRead = localStorage.getItem(`read_msgs_${userEmail}`);
+      if (savedRead) {
+        try {
+          setReadMessages(JSON.parse(savedRead));
+        } catch (e) {}
+      }
+      const savedDeleted = localStorage.getItem(`deleted_msgs_${userEmail}`);
+      if (savedDeleted) {
+        try {
+          setDeletedMessages(JSON.parse(savedDeleted));
+        } catch (e) {}
+      }
     }
-  }, [userId]);
+  }, [userEmail]);
 
   // Ad Rotation Logic
   useEffect(() => {
@@ -514,11 +445,18 @@ export default function App() {
     }
   }, [tasks, notes, bgMedia, playlist, userEmail, isDataLoaded]);
 
-  const handleLogout = async () => {
-    if (unsubAdsRef.current) unsubAdsRef.current();
-    if (unsubMsgsRef.current) unsubMsgsRef.current();
-    if (unsubUserRef.current) unsubUserRef.current();
-    await logOut();
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const email = new FormData(e.currentTarget).get('email') as string;
+    if (email) {
+      setUserEmail(email);
+      localStorage.setItem('currentUser', email);
+    }
+  };
+
+  const handleLogout = () => {
+    setUserEmail(null);
+    localStorage.removeItem('currentUser');
     setIsSettingsOpen(false);
     setIsMusicPlaying(false);
   };
@@ -578,7 +516,7 @@ export default function App() {
   };
 
   const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from<File>(e.target.files || []);
+    const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       const newTracks = files.map(file => ({
         url: URL.createObjectURL(file),
@@ -672,10 +610,22 @@ export default function App() {
     setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
   };
 
-  const handleSaveAd = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAdminLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const pin = new FormData(e.currentTarget).get('pin') as string;
+    if (pin === '4529') {
+      setIsAdminLoggedIn(true);
+      setIsAdminLoginOpen(false);
+    } else {
+      setToastMessage('Invalid PIN');
+    }
+  };
+
+  const handleSaveAd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAd = {
+    const newAd: Ad = {
+      id: editingAd ? editingAd.id : Date.now().toString(),
       title: formData.get('title') as string,
       isActive: formData.get('isActive') === 'on',
       intervalMinutes: Number(formData.get('intervalMinutes')) || 5,
@@ -684,92 +634,78 @@ export default function App() {
       embedCode: formData.get('embedCode') as string,
       text: formData.get('text') as string,
       linkUrl: formData.get('linkUrl') as string,
-      createdAt: Date.now()
     };
     
-    try {
-      if (editingAd) {
-        await updateDoc(doc(db, 'ads', editingAd.id), newAd);
-      } else {
-        await addDoc(collection(db, 'ads'), newAd);
-      }
-      setEditingAd(null);
-      setToastMessage('Advertisement saved successfully!');
-    } catch (error) {
-      console.error("Error saving ad", error);
-      setToastMessage('Error saving advertisement');
+    let updatedAds;
+    if (editingAd) {
+      updatedAds = ads.map(a => a.id === editingAd.id ? newAd : a);
+    } else {
+      updatedAds = [...ads, newAd];
     }
+    setAds(updatedAds);
+    localStorage.setItem('global_ads', JSON.stringify(updatedAds));
+    setEditingAd(null);
+    setToastMessage('Advertisement saved successfully!');
   };
 
   const handleDeleteAd = (id: string) => {
     setConfirmAction({
       message: 'Are you sure you want to delete this advertisement?',
-      onConfirm: async () => {
-        try {
-          await deleteDoc(doc(db, 'ads', id));
-          setConfirmAction(null);
-        } catch (error) {
-          console.error("Error deleting ad", error);
-        }
+      onConfirm: () => {
+        const updated = ads.filter(a => a.id !== id);
+        setAds(updated);
+        localStorage.setItem('global_ads', JSON.stringify(updated));
+        setConfirmAction(null);
       }
     });
   };
 
-  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newMsg = {
+    const newMsg: AdminMessage = {
+      id: Date.now().toString(),
       from: isAdminLoggedIn ? 'admin' : (userEmail || 'unknown'),
       to: formData.get('to') as string,
       subject: formData.get('subject') as string,
       body: formData.get('body') as string,
       timestamp: Date.now()
     };
+    const updated = [newMsg, ...adminMessages];
+    setAdminMessages(updated);
+    localStorage.setItem('global_messages', JSON.stringify(updated));
+    (e.target as HTMLFormElement).reset();
     
-    try {
-      await addDoc(collection(db, 'messages'), newMsg);
-      (e.target as HTMLFormElement).reset();
-      
-      if (isAdminLoggedIn) {
-        setAdminReplyTo(null);
-        setToastMessage('Message sent successfully!');
-      } else {
-        setUserReplyTo(null);
-        setToastMessage('Reply sent to admin!');
-      }
-    } catch (error) {
-      console.error("Error sending message", error);
-      setToastMessage('Error sending message');
+    if (isAdminLoggedIn) {
+      setAdminReplyTo(null);
+      setToastMessage('Message sent successfully!');
+    } else {
+      setUserReplyTo(null);
+      setToastMessage('Reply sent to admin!');
     }
   };
 
   const handleAdminDeleteMessage = (id: string) => {
     setConfirmAction({
       message: 'Delete this message globally?',
-      onConfirm: async () => {
-        try {
-          await deleteDoc(doc(db, 'messages', id));
-          setConfirmAction(null);
-        } catch (error) {
-          console.error("Error deleting message", error);
-        }
+      onConfirm: () => {
+        const updated = adminMessages.filter(m => m.id !== id);
+        setAdminMessages(updated);
+        localStorage.setItem('global_messages', JSON.stringify(updated));
+        setConfirmAction(null);
       }
     });
   };
 
   const handleUserDeleteMessage = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!userId) return;
     setConfirmAction({
       message: 'Delete this message from your inbox?',
-      onConfirm: async () => {
-        try {
-          const updated = [...deletedMessages, id];
-          await setDoc(doc(db, 'users', userId), { deletedMessages: updated }, { merge: true });
-          setConfirmAction(null);
-        } catch (error) {
-          console.error("Error deleting message", error);
-        }
+      onConfirm: () => {
+        const updated = [...deletedMessages, id];
+        setDeletedMessages(updated);
+        localStorage.setItem(`deleted_msgs_${userEmail}`, JSON.stringify(updated));
+        setConfirmAction(null);
       }
     });
   };
@@ -780,25 +716,13 @@ export default function App() {
   
   const unreadCount = userMessages.filter(m => m.to !== 'admin' && m.from !== userEmail && !readMessages.includes(m.id)).length;
 
-  const markAsRead = async (id: string) => {
-    if (!userId) return;
+  const markAsRead = (id: string) => {
     if (!readMessages.includes(id)) {
-      try {
-        const updated = [...readMessages, id];
-        await setDoc(doc(db, 'users', userId), { readMessages: updated }, { merge: true });
-      } catch (error) {
-        console.error("Error marking message as read", error);
-      }
+      const updated = [...readMessages, id];
+      setReadMessages(updated);
+      localStorage.setItem(`read_msgs_${userEmail}`, JSON.stringify(updated));
     }
   };
-
-  if (!isAuthReady) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   if (isAdminLoggedIn) {
     return (
@@ -1147,16 +1071,63 @@ export default function App() {
             </div>
             <h1 className="text-3xl font-light mb-2 text-center">Welcome Back</h1>
             <p className="text-white/60 text-center mb-8 text-sm">Sign in to sync your tasks and notes</p>
-            <div className="flex flex-col gap-4">
-              <button onClick={signInWithGoogle} className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition-colors mt-2 flex items-center justify-center gap-2">
-                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Sign in with Google
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Email Address</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  required
+                  placeholder="you@example.com"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors"
+                />
+              </div>
+              <button type="submit" className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition-colors mt-2">
+                Continue
               </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-white/10 flex justify-center">
+              <button 
+                onClick={() => setIsAdminLoginOpen(true)}
+                className="text-white/40 hover:text-white/80 transition-colors flex items-center gap-2 text-xs"
+              >
+                <Lock size={12} />
+                Admin Access
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Admin Login Modal */}
+        {isAdminLoginOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 w-full max-w-sm text-white shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-medium flex items-center gap-2">
+                  <Lock size={20} className="text-emerald-400" />
+                  Admin Login
+                </h2>
+                <button onClick={() => setIsAdminLoginOpen(false)} className="text-white/50 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleAdminLogin} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs text-white/60 mb-1 uppercase tracking-wider">Secret PIN</label>
+                  <input 
+                    type="password" 
+                    name="pin" 
+                    required
+                    autoFocus
+                    placeholder="••••"
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors text-center tracking-[0.5em] text-lg"
+                  />
+                </div>
+                <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-3 font-medium transition-colors mt-2">
+                  Access Panel
+                </button>
+              </form>
             </div>
           </div>
         )}
