@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell } from 'lucide-react';
+import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, Download, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell } from 'lucide-react';
 
 type Ad = {
   id: string;
@@ -304,6 +304,7 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsAppLoading(false), 3500);
@@ -516,7 +517,7 @@ export default function App() {
   };
 
   const handleMusicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
       const newTracks = files.map(file => ({
         url: URL.createObjectURL(file),
@@ -566,6 +567,51 @@ export default function App() {
   const handleSync = () => {
     setIsSyncing(true);
     setTimeout(() => setIsSyncing(false), 2000);
+  };
+
+  const handleExport = () => {
+    if (!userEmail) return;
+    const dataToExport = {
+      tasks,
+      notes,
+      bgMedia,
+      playlist
+    };
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `workspace_backup_${userEmail}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setToastMessage('Data exported successfully!');
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target?.result as string);
+        if (importedData.tasks) setTasks(importedData.tasks);
+        if (importedData.notes) setNotes(importedData.notes);
+        if (importedData.bgMedia) setBgMedia(importedData.bgMedia);
+        if (importedData.playlist) setPlaylist(importedData.playlist);
+        setToastMessage('Data imported successfully!');
+      } catch (error) {
+        console.error('Error parsing imported data:', error);
+        setToastMessage('Failed to import data. Invalid file format.');
+      }
+    };
+    reader.readAsText(file);
+    if (e.target) {
+      e.target.value = '';
+    }
   };
 
   const handleBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1362,6 +1408,41 @@ export default function App() {
                       <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
                       <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
                     </button>
+                  </div>
+                  <div className="h-px w-full bg-white/10 my-1"></div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm">Export Data</p>
+                      <p className="text-xs text-white/50">Save data to a file</p>
+                    </div>
+                    <button 
+                      onClick={handleExport}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
+                    >
+                      <Download size={14} />
+                      <span>Export</span>
+                    </button>
+                  </div>
+                  <div className="h-px w-full bg-white/10 my-1"></div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm">Import Data</p>
+                      <p className="text-xs text-white/50">Load data from a file</p>
+                    </div>
+                    <button 
+                      onClick={() => importInputRef.current?.click()}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
+                    >
+                      <Upload size={14} />
+                      <span>Import</span>
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={importInputRef} 
+                      onChange={handleImport} 
+                      accept=".json" 
+                      className="hidden" 
+                    />
                   </div>
                 </div>
               </div>
