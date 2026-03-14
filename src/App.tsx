@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, Download, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell } from 'lucide-react';
+import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, Download, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell, Database } from 'lucide-react';
 
 type Ad = {
   id: string;
@@ -269,6 +269,7 @@ export default function App() {
   
   const [modal, setModal] = useState<ModalState>({ isOpen: false, type: 'task', mode: 'add' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [playlist, setPlaylist] = useState<{ url: string, name: string }[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
@@ -1228,14 +1229,24 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('tasks')}
               className={`p-2 rounded-full transition-colors ${activeTab === 'tasks' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-white/70'}`}
+              title="Tasks"
             >
               <CheckSquare size={18} />
             </button>
             <button 
               onClick={() => setActiveTab('notes')}
               className={`p-2 rounded-full transition-colors ${activeTab === 'notes' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-white/70'}`}
+              title="Notes"
             >
               <FileText size={18} />
+            </button>
+            <div className="w-px h-4 bg-white/20 mx-1"></div>
+            <button 
+              onClick={() => setIsDataModalOpen(true)}
+              className="p-2 rounded-full transition-colors hover:bg-white/10 text-white/70"
+              title="Data Backup"
+            >
+              <Database size={18} />
             </button>
           </div>
 
@@ -1365,6 +1376,68 @@ export default function App() {
         </div>
       )}
 
+      {/* Data Backup Modal */}
+      {isDataModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-zinc-900/90 border border-white/10 rounded-3xl p-6 w-full max-w-md text-white shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Database size={20} className="text-emerald-400" />
+                Data Backup
+              </h2>
+              <button onClick={() => setIsDataModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-4">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <p className="text-sm text-white/80 mb-4">Export your tasks, notes, and settings to a file, or import them from a previous backup.</p>
+                
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Export Data</p>
+                      <p className="text-xs text-white/50">Save data to a file</p>
+                    </div>
+                    <button 
+                      onClick={handleExport}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
+                    >
+                      <Download size={14} />
+                      <span>Export</span>
+                    </button>
+                  </div>
+                  
+                  <div className="h-px w-full bg-white/10 my-1"></div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Import Data</p>
+                      <p className="text-xs text-white/50">Load data from a file</p>
+                    </div>
+                    <button 
+                      onClick={() => importInputRef.current?.click()}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
+                    >
+                      <Upload size={14} />
+                      <span>Import</span>
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={importInputRef} 
+                      onChange={handleImport} 
+                      accept=".json" 
+                      className="hidden" 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -1408,41 +1481,6 @@ export default function App() {
                       <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
                       <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
                     </button>
-                  </div>
-                  <div className="h-px w-full bg-white/10 my-1"></div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm">Export Data</p>
-                      <p className="text-xs text-white/50">Save data to a file</p>
-                    </div>
-                    <button 
-                      onClick={handleExport}
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
-                    >
-                      <Download size={14} />
-                      <span>Export</span>
-                    </button>
-                  </div>
-                  <div className="h-px w-full bg-white/10 my-1"></div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm">Import Data</p>
-                      <p className="text-xs text-white/50">Load data from a file</p>
-                    </div>
-                    <button 
-                      onClick={() => importInputRef.current?.click()}
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 text-sm flex items-center gap-2 transition-all shrink-0"
-                    >
-                      <Upload size={14} />
-                      <span>Import</span>
-                    </button>
-                    <input 
-                      type="file" 
-                      ref={importInputRef} 
-                      onChange={handleImport} 
-                      accept=".json" 
-                      className="hidden" 
-                    />
                   </div>
                 </div>
               </div>
