@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, Download, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell, Database } from 'lucide-react';
+import { Check, Edit, FileText, MessageSquare, Plus, Eye, Image as ImageIcon, X, Clock, CheckSquare, Settings, Music, Play, Pause, Upload, Download, RefreshCw, SkipBack, SkipForward, Volume2, VolumeX, LogOut, Trash2, Lock, Shield, ExternalLink, Megaphone, Inbox, Send, Bell, Database, Monitor } from 'lucide-react';
 
 type Ad = {
   id: string;
@@ -301,6 +301,7 @@ export default function App() {
   const [adminReplyTo, setAdminReplyTo] = useState<AdminMessage | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const musicInputRef = useRef<HTMLInputElement>(null);
@@ -310,6 +311,17 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => setIsAppLoading(false), 3500);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Check if it's a mobile device and hasn't seen the warning yet
+    if (window.innerWidth < 768) {
+      const hasSeenWarning = sessionStorage.getItem('mobileWarningSeen');
+      if (!hasSeenWarning) {
+        setShowMobileWarning(true);
+        sessionStorage.setItem('mobileWarningSeen', 'true');
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -1832,6 +1844,28 @@ export default function App() {
         </div>
       )}
         </>
+      )}
+
+      {/* Mobile Warning Modal */}
+      {showMobileWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-white shadow-2xl text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+              <Monitor size={32} className="text-emerald-400" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Desktop Recommended</h2>
+            <p className="text-white/70 text-sm mb-6 leading-relaxed">
+              For the best experience and full functionality, we highly recommend using this application on a desktop or laptop device.
+            </p>
+            <button
+              onClick={() => setShowMobileWarning(false)}
+              className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl py-3 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Continue Anyway
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
